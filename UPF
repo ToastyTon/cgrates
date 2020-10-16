@@ -1,0 +1,15 @@
+func (s *Scheduler) updateActStats(act *engine.Action, isFailed bool) {
+	mux := &s.aSMux
+	statsMp := s.actSuccessStats
+	if isFailed {
+		mux = &s.aFMux
+		statsMp = s.actFailedStats
+	}
+	now := time.Now()
+	mux.Lock()
+	for aType := range statsMp {
+		for t := range statsMp[aType] {
+			if now.Sub(t) > s.actStatsInterval {
+				delete(statsMp[aType], t)
+				if len(statsMp[aType]) == 0 {
+					delete(statsMp, aType)
